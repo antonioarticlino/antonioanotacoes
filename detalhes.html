@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Descrição do Item</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      font-family: 'Press Start 2P', cursive;
+      background-color: #000;
+      background-size: 64px;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    .container {
+      width: 100vw;
+      height: 100vh;
+      padding: 60px;
+      box-sizing: border-box;
+      background: rgba(0, 0, 0, 0.85);
+      border: 6px solid #3e3e3e;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    h2 {
+      text-align: center;
+      color: #8fff5f;
+      text-shadow: 2px 2px #000;
+      font-size: 28px;
+      margin-bottom: 30px;
+    }
+
+    #info {
+      font-size: 18px;
+      margin-bottom: 25px;
+      line-height: 2;
+      max-width: 1000px;
+    }
+
+    textarea {
+      width: 90%;
+      max-width: 1000px;
+      height: 200px;
+      padding: 16px;
+      font-size: 18px;
+      border: 4px solid #000;
+      background: #c2b280;
+      color: #000;
+      resize: vertical;
+      box-shadow: inset 3px 3px #1f1f1f;
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    .btn {
+      margin-top: 25px;
+      padding: 16px 32px;
+      font-size: 18px;
+      font-weight: bold;
+      background: #00aa00;
+      color: white;
+      border: 4px solid #000;
+      cursor: pointer;
+      transition: 0.2s;
+      box-shadow: 3px 3px #1f1f1f;
+      font-family: 'Press Start 2P', cursive;
+    }
+
+    .btn:hover {
+      transform: scale(1.08);
+      filter: brightness(1.1);
+    }
+
+    .voltar {
+      display: inline-block;
+      margin-top: 40px;
+      font-size: 18px;
+      color: #8fff5f;
+      text-decoration: none;
+      transition: 0.3s;
+      font-family: 'Press Start 2P', cursive;
+    }
+
+    .voltar:hover {
+      transform: scale(1.08);
+      text-shadow: 0 0 6px #000;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>📝 Descrição do Item</h2>
+    <div id="info">Carregando dados...</div>
+    <textarea id="descricao" placeholder="Escreva aqui a descrição do item..."></textarea>
+    <button class="btn" onclick="salvarDescricao()">💾 Salvar Descrição</button>
+    <a href="index.html" class="voltar">⬅️ Voltar ao painel principal</a>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // NOVA configuração do Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAd4PhJku7IdcOkSlf_w7lMomfZdOlmxiQ",
+      authDomain: "anotacoes-minhas.firebaseapp.com",
+      databaseURL: "https://anotacoes-minhas-default-rtdb.firebaseio.com",
+      projectId: "anotacoes-minhas",
+      storageBucket: "anotacoes-minhas.firebasestorage.app",
+      messagingSenderId: "725833923909",
+      appId: "1:725833923909:web:7fc54b2b340d962be1522c",
+      measurementId: "G-2LQC2KWE4S"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+
+    const ref = doc(db, "itens", id);
+
+    async function carregarDescricao() {
+      const docSnap = await getDoc(ref);
+      if (docSnap.exists()) {
+        const dados = docSnap.data();
+
+        // Tratamento para dataCompra e dataVenda
+        const dataCompra = dados.dataCompra
+          ? (dados.dataCompra.seconds
+            ? new Date(dados.dataCompra.seconds * 1000).toLocaleDateString()
+            : dados.dataCompra)
+          : "-";
+        const dataVenda = dados.dataVenda
+          ? (dados.dataVenda.seconds
+            ? new Date(dados.dataVenda.seconds * 1000).toLocaleDateString()
+            : dados.dataVenda)
+          : "Ainda não vendido";
+
+        document.getElementById("info").innerHTML = `
+          <strong>🧾 Nome:</strong> ${dados.nome}<br>
+          <strong>📦 Categoria:</strong> ${dados.categoria}<br>
+          <strong>📅 Data Compra:</strong> ${dataCompra}<br>
+          <strong>💰 Compra:</strong> R$ ${dados.compra}<br>
+          <strong>💵 Venda:</strong> ${dados.venda ? "R$ " + dados.venda : "Ainda não vendido"}
+        `;
+        document.getElementById("descricao").value = dados.descricao || "";
+      } else {
+        alert("Item não encontrado.");
+      }
+    }
+
+    async function salvarDescricao() {
+      const texto = document.getElementById("descricao").value.trim();
+      await updateDoc(ref, { descricao: texto });
+      alert("Descrição salva com sucesso!");
+    }
+
+    carregarDescricao();
+    window.salvarDescricao = salvarDescricao;
+  </script>
+</body>
+</html>

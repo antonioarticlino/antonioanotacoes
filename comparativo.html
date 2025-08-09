@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Comparativo de Lucro - KAYN x ANTONIO PEDRO</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    :root { --mc-green:#8fff5f; --mc-panel:#c2b280; }
+    html,body{margin:0;height:100%;background:#000;color:#fff;font-family:'Press Start 2P',cursive}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}
+    h1{color:var(--mc-green);text-align:center;text-shadow:2px 2px #000;margin:10px 0 24px}
+    .panel{background:#222a;border:4px solid #3e3e3e;padding:16px}
+    .controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
+    select{font-family:'Press Start 2P',monospace;padding:10px;border:3px solid #000;background:var(--mc-panel);color:#000}
+    canvas{background:#111;border:3px solid #000;width:100%;height:420px;display:block}
+    .legend{margin-top:10px;font-size:12px;color:#ddd}
+    .totals{margin-top:12px;font-size:12px;line-height:1.8}
+    .totals b{color:var(--mc-green)}
+    .empty{padding:16px;background:#333;border:3px solid #000;margin-top:10px;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>📊 Comparativo de Lucro: KAYN x ANTONIO PEDRO</h1>
+    <div class="panel">
+      <div class="controls">
+        <select id="modo">
+          <option value="mensal">Mensal</option>
+          <option value="anual">Anual</option>
+        </select>
+        <select id="mesAno" title="Escolha Mês/Ano (para Mensal)"></select>
+        <select id="ano" title="Escolha o Ano (para Anual)" style="display:none"></select>
+      </div>
+
+      <canvas id="chart"></canvas>
+      <div id="empty" class="empty" style="display:none"></div>
+
+      <div class="legend">
+        🟦 <b>KAYN</b> | 🟩 <b>ANTONIO PEDRO</b><br>
+        <small>Lucro = Vendas − Custo dos itens vendidos, considerando <i>dataVenda</i> dentro do período.</small>
+      </div>
+      <div class="totals" id="totais"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // Configuração Firebase - KAYN (Antigo)
+    const cfgKayn = {
+      apiKey: "AIzaSyDyGbrlrxWmcNj9Tm2ZWWa7gvvoil4lyrI",
+      authDomain: "joabe-anotacoes.firebaseapp.com",
+      projectId: "joabe-anotacoes",
+      storageBucket: "joabe-anotacoes.appspot.com",
+      messagingSenderId: "50670952443",
+      appId: "1:50670952443:web:67880481e8aadec981355e",
+      measurementId: "G-E68TLB4Z1G"
+    };
+
+    // Configuração Firebase - ANTONIO PEDRO (Novo)
+    const cfgAntonio = {
+      apiKey: "AIzaSyAd4PhJku7IdcOkSlf_w7lMomfZdOlmxiQ",
+      authDomain: "anotacoes-minhas.firebaseapp.com",
+      databaseURL: "https://anotacoes-minhas-default-rtdb.firebaseio.com",
+      projectId: "anotacoes-minhas",
+      storageBucket: "anotacoes-minhas.firebasestorage.app",
+      messagingSenderId: "725833923909",
+      appId: "1:725833923909:web:7fc54b2b340d962be1522c",
+      measurementId: "G-2LQC2KWE4S"
+    };
+
+    const appKayn = initializeApp(cfgKayn, "kayn");
+    const appAntonio = initializeApp(cfgAntonio, "antonio");
+    const dbKayn = getFirestore(appKayn);
+    const dbAntonio = getFirestore(appAntonio);
+
+    function toDate(val){
+      if (!val) return null;
+      if (val instanceof Date) return val;
+      if (typeof val === "string"){ const d = new Date(val); return isNaN(d.getTime()) ? null : d; }
+      if (val.seconds) return new Date(val.seconds * 1000);
+      const d = new Date(val); return isNaN(d.getTime()) ? null : d;
+    }
+    const keyMesAno = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const onlyYear  = d => d.getFullYear();
+    const fmtBR = v => (v<0? "-" : "") + "R$ " + Math.abs(v).toFixed(2).replace(".", ",");
+
+    async function loadItens(db, label){
+      const snap = await getDocs(collection(db, "itens"));
+      return snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    }
+
+    function agregacoes(itens){
+      const porMes = new Map();
+      const porAno = new Map();
+      for(const it of itens){
+        const dv = toDate(it.dataVenda);
+        if(!dv) continue;
+        const venda = Number(it.venda || 0);
+        const custo = Number(it.compra || 0);
+        const km = keyMesAno(dv), ky = onlyYear(dv);
+        if(!porMes.has(km)) porMes.set(km,{vendas:0,custo:0});
+        if(!porAno.has(ky)) porAno.set(ky,{vendas:0,custo:0});
+        porMes.get(km).vendas += venda; porMes.get(km).custo += custo;
+        porAno.get(ky).vendas += venda; porAno.get(ky).custo += custo;
+      }
+      const lucroMes = new Map([...porMes].map(([k,v]) => [k, v.vendas - v.custo]));
+      const lucroAno = new Map([...porAno].map(([k,v]) => [k, v.vendas - v.custo]));
+      return { lucroMes, lucroAno };
+    }
+
+    const elModo   = document.getElementById("modo");
+    const elMesAno = document.getElementById("mesAno");
+    const elAno    = document.getElementById("ano");
+    const elTotais = document.getElementById("totais");
+    const elEmpty  = document.getElementById("empty");
+    const ctx = document.getElementById("chart").getContext("2d");
+    let chart;
+
+    function render(labels, aData, nData, eixo){
+      if(chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            { label: "KAYN", data: aData, borderWidth: 1, backgroundColor:"#3399ff" },
+            { label: "ANTONIO PEDRO", data: nData, borderWidth: 1, backgroundColor:"#cc3366" }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true, title:{display:true,text:"Lucro (R$)"} },
+            x: { title:{display:true,text:eixo} }
+          }
+        }
+      });
+    }
+
+    const itensKayn = await loadItens(dbKayn, "KAYN");
+    const itensAntonio = await loadItens(dbAntonio, "ANTONIO PEDRO");
+    const aggKayn = agregacoes(itensKayn);
+    const aggAntonio = agregacoes(itensAntonio);
+
+    const meses = new Set([...aggKayn.lucroMes.keys(), ...aggAntonio.lucroMes.keys()]);
+    const anos  = new Set([...aggKayn.lucroAno.keys(), ...aggAntonio.lucroAno.keys()]);
+
+    const formatMes = m => { const [y,mm]=m.split("-"); return `${mm}/${y}`; };
+    [...meses].sort().forEach(k=>{
+      const opt=document.createElement("option");
+      opt.value=k; opt.textContent=formatMes(k);
+      elMesAno.appendChild(opt);
+    });
+    [...anos].sort().forEach(y=>{
+      const opt=document.createElement("option");
+      opt.value=y; opt.textContent=y;
+      elAno.appendChild(opt);
+    });
+
+    if(elMesAno.options.length>0) elMesAno.selectedIndex = elMesAno.options.length-1;
+    if(elAno.options.length>0)    elAno.selectedIndex    = elAno.options.length-1;
+
+    function atualizar(){
+      const modo = elModo.value;
+      if(modo==="mensal"){
+        elMesAno.style.display="";
+        elAno.style.display="none";
+        const k = elMesAno.value;
+        const a = aggKayn.lucroMes.get(k) ?? 0;
+        const n = aggAntonio.lucroMes.get(k) ?? 0;
+        render(["Lucro do mês"], [a], [n], `Mês ${formatMes(k)}`);
+        elTotais.innerHTML = `Mês ${formatMes(k)} — KAYN: <b>${fmtBR(a)}</b> | ANTONIO PEDRO: <b>${fmtBR(n)}</b> | Diferença: <b>${fmtBR(n-a)}</b>`;
+      } else {
+        elMesAno.style.display="none";
+        elAno.style.display="";
+        const y = elAno.value;
+        const a = aggKayn.lucroAno.get(Number(y)) ?? 0;
+        const n = aggAntonio.lucroAno.get(Number(y)) ?? 0;
+        render(["Lucro do ano"], [a], [n], `Ano ${y}`);
+        elTotais.innerHTML = `Ano ${y} — KAYN: <b>${fmtBR(a)}</b> | ANTONIO PEDRO: <b>${fmtBR(n)}</b> | Diferença: <b>${fmtBR(n-a)}</b>`;
+      }
+    }
+
+    elModo.addEventListener("change", atualizar);
+    elMesAno.addEventListener("change", atualizar);
+    elAno.addEventListener("change", atualizar);
+
+    atualizar();
+  </script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Lucro Mensal - Minecraft</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      font-family: 'Press Start 2P', cursive;
+      background-color: #000;
+      background-size: 64px;
+      color: #fff;
+    }
+    .container {
+      width: 100%;
+      height: 100%;
+      padding: 30px;
+      box-sizing: border-box;
+      background-color: rgba(0, 0, 0, 0.85);
+      border: 4px solid #3e3e3e;
+    }
+    h1 {
+      text-align: center;
+      color: #8fff5f;
+      text-shadow: 2px 2px #000;
+      margin-bottom: 30px;
+    }
+    select {
+      width: 100%;
+      padding: 12px;
+      font-size: 14px;
+      font-family: 'Press Start 2P', monospace;
+      border-radius: 0;
+      background-color: #c2b280;
+      color: #000;
+      border: 3px solid #000;
+      margin-bottom: 30px;
+      box-shadow: 2px 2px #1f1f1f;
+    }
+    option { background-color: #c2b280; color: #000; }
+    .result {
+      text-align: center;
+      font-size: 14px;
+      font-weight: bold;
+      color: #8fff5f;
+      background: #444;
+      padding: 20px;
+      border: 3px solid #000;
+      border-radius: 0;
+      box-shadow: 4px 4px #1f1f1f;
+      min-height: 80px;
+    }
+    #btnExportar {
+      margin: 20px auto;
+      display: none;
+      font-family: 'Press Start 2P', cursive;
+      background: #00aaaa;
+      border: 3px solid #000;
+      padding: 10px 20px;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 2px 2px #000;
+    }
+    .voltar {
+      display: block;
+      margin-top: 30px;
+      text-align: center;
+      font-size: 12px;
+      color: #00ffff;
+      text-decoration: none;
+      font-family: 'Press Start 2P', cursive;
+      transition: 0.3s;
+    }
+    .voltar:hover { transform: scale(1.05); text-shadow: 0 0 5px #00ffff; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 Lucro Mensal</h1>
+    <select id="filtro-lucro">
+      <option value="todos">Selecionar mês...</option>
+    </select>
+    <div class="result" id="resultado-lucro">Selecione um mês para ver o lucro.</div>
+    <button id="btnExportar">📄 Exportar PDF</button>
+    <a href="index.html" class="voltar">⬅️ Voltar ao painel principal</a>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // Config Firebase (corrigido)
+    const firebaseConfig = {
+      apiKey: "AIzaSyAd4PhJku7IdcOkSlf_w7lMomfZdOlmxiQ",
+      authDomain: "anotacoes-minhas.firebaseapp.com",
+      projectId: "anotacoes-minhas",
+      storageBucket: "anotacoes-minhas.appspot.com",
+      messagingSenderId: "725833923909",
+      appId: "1:725833923909:web:7fc54b2b340d962be1522c",
+      measurementId: "G-2LQC2KWE4S"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const col = collection(db, "itens");
+
+    const filtro = document.getElementById("filtro-lucro");
+    const resultado = document.getElementById("resultado-lucro");
+    const btnExportar = document.getElementById("btnExportar");
+
+    // ----- helpers -----
+    const brl = (n) =>
+      Number.isFinite(n) ? new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' }).format(n) : 'R$ 0,00';
+
+    function asDate(stored) {
+      if (!stored) return null;
+      if (typeof stored?.toDate === 'function') return stored.toDate();               // Firestore Timestamp
+      if (typeof stored?.seconds === 'number') return new Date(stored.seconds * 1000);
+      if (typeof stored === 'number') return new Date(stored);
+      if (typeof stored === 'string') return new Date(stored);
+      if (stored instanceof Date) return stored;
+      return null;
+    }
+
+    function getMesAno(data) {
+      const d = asDate(data);
+      if (!d || isNaN(d.getTime())) return null;
+      const ano = d.getFullYear();
+      const mes = String(d.getMonth() + 1).padStart(2, '0');
+      return `${ano}-${mes}`; // ordenável
+    }
+
+    function formatarMes(m) {
+      const [ano, mes] = m.split("-");
+      return `${mes}/${ano}`;
+    }
+
+    async function carregarItens() {
+      const snap = await getDocs(col);
+      return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+
+    function exportarParaPDF(mesSelecionado, comprasDoMes, comprasVendidas, vendas, lucro) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFont("courier", "bold");
+      doc.setFontSize(16);
+      doc.text("Relatório de Lucro Mensal", 20, 20);
+
+      doc.setFontSize(12);
+      doc.text(`Mês: ${formatarMes(mesSelecionado)}`, 20, 35);
+      doc.text(`📥 Gastos (compras no mês): ${brl(comprasDoMes)}`, 20, 50);
+      doc.text(`📦 Compras dos vendidos: ${brl(comprasVendidas)}`, 20, 60);
+      doc.text(`💰 Vendas: ${brl(vendas)}`, 20, 70);
+      doc.text(`🧾 Lucro: ${brl(lucro)}`, 20, 80);
+
+      doc.save(`lucro_${mesSelecionado}.pdf`);
+    }
+
+    function calcularLucro(itens, mesSelecionado) {
+      let comprasDoMes = 0;
+      let comprasVendidas = 0;
+      let vendas = 0;
+
+      itens.forEach(item => {
+        const mesCompra = item.dataCompra ? getMesAno(item.dataCompra) : null;
+        const mesVenda  = item.dataVenda  ? getMesAno(item.dataVenda)  : null;
+
+        if (mesCompra === mesSelecionado) {
+          comprasDoMes += Number(item.compra || 0);
+        }
+        if (mesVenda === mesSelecionado) {
+          comprasVendidas += Number(item.compra || 0);
+          vendas += Number(item.venda || 0);
+        }
+      });
+
+      const lucro = vendas - comprasVendidas;
+
+      resultado.innerHTML = `
+        📥 Gastos (compras no mês): <strong>${brl(comprasDoMes)}</strong><br>
+        📦 Compras dos itens vendidos: <strong>${brl(comprasVendidas)}</strong><br>
+        💰 Vendas: <strong>${brl(vendas)}</strong><br>
+        🧾 <strong>Lucro: ${brl(lucro)}</strong>
+      `;
+
+      btnExportar.style.display = "block";
+      btnExportar.onclick = () => exportarParaPDF(mesSelecionado, comprasDoMes, comprasVendidas, vendas, lucro);
+    }
+
+    async function atualizarFiltro() {
+      const itens = await carregarItens();
+      const meses = new Set();
+
+      itens.forEach(item => {
+        const mc = getMesAno(item.dataCompra);
+        const mv = getMesAno(item.dataVenda);
+        if (mc) meses.add(mc);
+        if (mv) meses.add(mv);
+      });
+
+      filtro.innerHTML = '<option value="todos">Selecionar mês...</option>';
+      const arr = [...meses].sort(); // YYYY-MM ordena certinho
+      if (arr.length === 0) {
+        resultado.textContent = "Nenhum dado encontrado. Adicione itens para calcular o lucro.";
+        btnExportar.style.display = "none";
+        return;
+      }
+
+      arr.forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = m;
+        opt.textContent = formatarMes(m);
+        filtro.appendChild(opt);
+      });
+
+      // Seleciona automaticamente o último mês disponível
+      filtro.selectedIndex = filtro.options.length - 1;
+      calcularLucro(itens, filtro.value);
+
+      filtro.addEventListener("change", () => {
+        if (filtro.value !== "todos") {
+          calcularLucro(itens, filtro.value);
+        } else {
+          resultado.textContent = "Selecione um mês para ver o lucro.";
+          btnExportar.style.display = "none";
+        }
+      });
+    }
+
+    atualizarFiltro();
+  </script>
+</body>
+</html>
