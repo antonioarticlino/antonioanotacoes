@@ -6,39 +6,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
+      margin: 0; padding: 0; width: 100%; height: 100%;
       font-family: 'Press Start 2P', cursive;
-      background-color: #000;
-      background-size: 64px;
-      color: #fff;
+      background-color: #000; background-size: 64px; color: #fff;
     }
     .container {
-      width: 100%;
-      height: 100%;
-      padding: 30px;
-      background: rgba(0, 0, 0, 0.85);
-      box-sizing: border-box;
-      border: 4px solid #3e3e3e;
+      width: 100%; height: 100%; padding: 30px; box-sizing: border-box;
+      background: rgba(0, 0, 0, 0.85); border: 4px solid #3e3e3e;
     }
-    h2 {
-      color: #8fff5f;
-      text-align: center;
-      text-shadow: 2px 2px #000;
-      margin-bottom: 30px;
-    }
+    h2 { color: #8fff5f; text-align: center; text-shadow: 2px 2px #000; margin-bottom: 30px; }
     input, select, button {
-      font-family: 'Press Start 2P', monospace;
-      padding: 10px;
-      margin: 5px;
-      font-size: 12px;
-      border-radius: 0;
-      border: 3px solid #000;
-      background: #c2b280;
-      color: #000;
-      box-shadow: 2px 2px #1f1f1f;
+      font-family: 'Press Start 2P', monospace; padding: 10px; margin: 5px; font-size: 12px;
+      border-radius: 0; border: 3px solid #000; background: #c2b280; color: #000; box-shadow: 2px 2px #1f1f1f;
     }
     select option { background-color: #c2b280; color: #000; }
     button { cursor: pointer; transition: 0.2s; }
@@ -52,14 +31,27 @@
     .btn-add:hover,.btn-edit:hover,.btn-save:hover,.btn-delete:hover,.btn-lucro:hover {
       transform: scale(1.05); filter: brightness(1.1);
     }
-    table {
-      width: 100%; margin-top: 20px; border-collapse: collapse; background-color: #5c5c5c;
-    }
+    table { width: 100%; margin-top: 20px; border-collapse: collapse; background-color: #5c5c5c; }
     thead { background: #006400; color: #fff; }
     th, td { padding: 10px; border: 2px solid #000; text-align: center; }
     .lucro { margin-top: 15px; font-weight: bold; color: #8fff5f; text-align: right; text-shadow: 1px 1px #000; }
     input[type="radio"] { transform: scale(1.2); margin-right: 5px; }
     ::placeholder { color: #333; }
+
+    /* Paginação estilo Minecraft */
+    .pagination-bar {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+      justify-content: space-between; margin-top: 16px;
+      background: #3b3b3b; border: 3px solid #000; padding: 10px;
+    }
+    .pagination-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .page-btn {
+      background: #2e7d32; color: #fff; border: 3px solid #000; box-shadow: 2px 2px #1f1f1f;
+      padding: 8px 10px; font-size: 12px;
+    }
+    .page-btn[disabled] { opacity: 0.6; filter: grayscale(0.4); cursor: not-allowed; }
+    .page-info { color: #8fff5f; text-shadow: 1px 1px #000; font-size: 12px; }
+    .page-size { background: #c2b280; }
   </style>
 </head>
 <body>
@@ -68,7 +60,7 @@
 
     <div>
       <input id="nome" placeholder="Nome do item">
-      <!-- campos de valor em TEXT p/ aceitar vírgula/ponto -->
+      <!-- valores como TEXT p/ aceitar vírgula/ponto -->
       <input id="compra" type="text" placeholder="Valor compra">
       <input id="venda" type="text" placeholder="Valor venda (opcional)">
       <input id="dataCompra" type="date">
@@ -88,12 +80,14 @@
     </div>
 
     <div style="margin-top: 20px;">
-      <label><input type="radio" name="filtro" value="todos" checked onchange="mostrar()"> Todos</label>
-      <label><input type="radio" name="filtro" value="vendidos" onchange="mostrar()"> Vendidos</label>
-      <label><input type="radio" name="filtro" value="naoVendidos" onchange="mostrar()"> Não Vendidos</label>
+      <label><input type="radio" name="filtro" value="todos" checked onchange="aplicarFiltros()"> Todos</label>
+      <label><input type="radio" name="filtro" value="vendidos" onchange="aplicarFiltros()"> Vendidos</label>
+      <label><input type="radio" name="filtro" value="naoVendidos" onchange="aplicarFiltros()"> Não Vendidos</label>
     </div>
 
-    <div><input type="text" id="buscaCategoria" placeholder="🔍 Buscar" oninput="mostrar()"></div>
+    <div>
+      <input type="text" id="buscaCategoria" placeholder="🔍 Buscar" oninput="aplicarFiltros()">
+    </div>
 
     <div class="lucro" id="lucroTotal">💎 Lucro total: R$ 0,00</div>
 
@@ -106,6 +100,25 @@
       </thead>
       <tbody id="tabela"></tbody>
     </table>
+
+    <!-- Barra de Paginação -->
+    <div class="pagination-bar">
+      <div class="pagination-controls">
+        <button class="page-btn" id="firstPage" onclick="irPrimeira()">⏮ Primeira</button>
+        <button class="page-btn" id="prevPage"  onclick="irAnterior()">◀ Anterior</button>
+        <span class="page-info" id="pageInfo">Página 1 de 1</span>
+        <button class="page-btn" id="nextPage"  onclick="irProxima()">Próxima ▶</button>
+        <button class="page-btn" id="lastPage"  onclick="irUltima()">⏭ Última</button>
+      </div>
+      <div class="pagination-controls">
+        <label for="pageSize">Itens por página:</label>
+        <select id="pageSize" class="page-size" onchange="mudarPageSize()">
+          <option value="10" selected>10</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+    </div>
   </div>
 
   <script type="module">
@@ -113,7 +126,7 @@
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 
-    // Config Firebase (corrigido: storageBucket .appspot.com)
+    // Config Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyAd4PhJku7IdcOkSlf_w7lMomfZdOlmxiQ",
       authDomain: "anotacoes-minhas.firebaseapp.com",
@@ -131,12 +144,8 @@
 
     // ===== Helpers =====
     function dateAtNoon(y, m, d) { return new Date(y, m - 1, d, 12, 0, 0, 0); } // evita shift de fuso
-    function toDateFromInput(value) { // 'yyyy-mm-dd' -> Date 12:00
-      if (!value) return null;
-      const [y, m, d] = value.split('-').map(Number);
-      return dateAtNoon(y, m, d);
-    }
-    function parseBRDate(str) { // 'dd/mm/aaaa' -> Date 12:00
+    function toDateFromInput(value) { if (!value) return null; const [y, m, d] = value.split('-').map(Number); return dateAtNoon(y, m, d); }
+    function parseBRDate(str) {
       if (!str) return null;
       const m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
       if (!m) return null;
@@ -158,15 +167,20 @@
     }
     function parseMoney(str) {
       if (str == null) return NaN;
-      let s = String(str).replace(/R\$\s?/i, '').trim(); // tira R$
-      s = s.replace(/\./g, '').replace(',', '.');        // 1.234,56 -> 1234.56
+      let s = String(str).replace(/R\$\s?/i, '').trim();
+      s = s.replace(/\./g, '').replace(',', '.');
       const n = parseFloat(s);
       return Number.isFinite(n) ? n : NaN;
     }
     const brl = (n) => Number.isFinite(n) ? n.toLocaleString('pt-BR', { style:'currency', currency:'BRL' }) : '';
 
-    // ===== Prefill Data Compra = hoje (editável) =====
-    function todayInputValue(){
+    // ===== Estado de Paginação =====
+    let itensCache = [];       // todos itens carregados do Firestore
+    let itensFiltrados = [];   // após aplicar filtros/busca
+    let currentPage = 1;
+    let pageSize = 10;
+
+    function todayInputValue() {
       const t = new Date();
       const y = t.getFullYear(), m = String(t.getMonth()+1).padStart(2,'0'), d = String(t.getDate()).padStart(2,'0');
       return `${y}-${m}-${d}`;
@@ -191,56 +205,14 @@
 
       await addDoc(col, { nome, compra, venda, dataCompra, dataVenda, categoria });
       limpar();
-      mostrar();
-    }
-
-    async function mostrar() {
-      const filtro = document.querySelector('input[name="filtro"]:checked').value;
-      const termoBusca = document.getElementById('buscaCategoria')?.value.toLowerCase() || "";
-      const tabela = document.getElementById('tabela');
-      tabela.innerHTML = "";
-      const docs = await getDocs(col);
-      let lucroTotal = 0;
-
-      docs.forEach(d => {
-        const item = d.data();
-        const id = d.id;
-        const vendido = item.venda !== null && item.venda !== undefined;
-
-        if ((filtro === 'vendidos' && !vendido) || (filtro === 'naoVendidos' && vendido)) return;
-        if (termoBusca && !item.categoria?.toLowerCase().includes(termoBusca)) return;
-
-        const lucro = vendido ? (item.venda - item.compra) : null;
-        if (vendido) lucroTotal += (item.venda - item.compra);
-
-        const dataCompraStr = formatBRDate(item.dataCompra);
-        const dataVendaStr  = formatBRDate(item.dataVenda);
-
-        tabela.innerHTML += `
-          <tr id="linha-${id}">
-            <td contenteditable="false">${item.nome ?? ""}</td>
-            <td contenteditable="false">${brl(item.compra)}</td>
-            <td contenteditable="false">${item.venda != null ? brl(item.venda) : ""}</td>
-            <td>${vendido ? brl(lucro) : "-"}</td>
-            <td contenteditable="false">${dataCompraStr}</td>
-            <td contenteditable="false">${dataVendaStr}</td>
-            <td contenteditable="false">${item.categoria ?? ""}</td>
-            <td>
-              <button class="btn-edit" onclick="editar('${id}')">✏️</button>
-              <button class="btn-save" onclick="salvar('${id}')" style="display:none;">📂</button>
-              <button class="btn-delete" onclick="excluir('${id}')">🗑️</button>
-              <button onclick="detalhes('${id}')">🔍</button>
-            </td>
-          </tr>
-        `;
-      });
-
-      document.getElementById("lucroTotal").innerText = `💎 Lucro total: ${brl(lucroTotal)}`;
+      await carregarTudo(); // recarrega cache
+      aplicarFiltros();     // re-render com paginação
     }
 
     async function excluir(id) {
       await deleteDoc(doc(db, "itens", id));
-      mostrar();
+      await carregarTudo();
+      aplicarFiltros();
     }
 
     function editar(id) {
@@ -276,30 +248,139 @@
       linha.querySelector(".btn-edit").style.display = "inline-block";
       linha.querySelector(".btn-save").style.display = "none";
 
-      mostrar();
+      await carregarTudo();
+      aplicarFiltros();
     }
 
     function limpar() {
       document.getElementById('nome').value = "";
       document.getElementById('compra').value = "";
       document.getElementById('venda').value = "";
-      document.getElementById('dataCompra').value = todayInputValue(); // mantém hoje
+      document.getElementById('dataCompra').value = todayInputValue();
       document.getElementById('dataVenda').value = "";
       document.getElementById('categoria').value = "";
     }
 
-    function detalhes(id) {
-      window.location.href = `detalhes.html?id=${id}`;
+    function detalhes(id) { window.location.href = `detalhes.html?id=${id}`; }
+
+    // ===== Paginação + Render =====
+    function aplicarFiltros() {
+      const filtro = document.querySelector('input[name="filtro"]:checked').value;
+      const termoBusca = document.getElementById('buscaCategoria')?.value.toLowerCase() || "";
+
+      itensFiltrados = itensCache.filter(({ data }) => {
+        const vendido = data.venda !== null && data.venda !== undefined;
+        if ((filtro === 'vendidos' && !vendido) || (filtro === 'naoVendidos' && vendido)) return false;
+        if (termoBusca && !data.categoria?.toLowerCase().includes(termoBusca)) return false;
+        return true;
+      });
+
+      // Sempre volta pra primeira página quando muda filtro/busca
+      currentPage = 1;
+      renderTabelaPaginada();
     }
 
+    function renderTabelaPaginada() {
+      const tabela = document.getElementById('tabela');
+      tabela.innerHTML = "";
+
+      const total = itensFiltrados.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+      const pageItems = itensFiltrados.slice(start, end);
+
+      let lucroTotal = 0;
+
+      for (const { id, data } of pageItems) {
+        const vendido = data.venda !== null && data.venda !== undefined;
+        const lucro = vendido ? (data.venda - data.compra) : null;
+        if (vendido) lucroTotal += (data.venda - data.compra);
+
+        const dataCompraStr = formatBRDate(data.dataCompra);
+        const dataVendaStr  = formatBRDate(data.dataVenda);
+
+        tabela.innerHTML += `
+          <tr id="linha-${id}">
+            <td contenteditable="false">${data.nome ?? ""}</td>
+            <td contenteditable="false">${brl(data.compra)}</td>
+            <td contenteditable="false">${data.venda != null ? brl(data.venda) : ""}</td>
+            <td>${vendido ? brl(lucro) : "-"}</td>
+            <td contenteditable="false">${dataCompraStr}</td>
+            <td contenteditable="false">${dataVendaStr}</td>
+            <td contenteditable="false">${data.categoria ?? ""}</td>
+            <td>
+              <button class="btn-edit" onclick="editar('${id}')">✏️</button>
+              <button class="btn-save" onclick="salvar('${id}')" style="display:none;">📂</button>
+              <button class="btn-delete" onclick="excluir('${id}')">🗑️</button>
+              <button onclick="detalhes('${id}')">🔍</button>
+            </td>
+          </tr>
+        `;
+      }
+
+      document.getElementById("lucroTotal").innerText = `💎 Lucro total (página): ${brl(lucroTotal)}`;
+      atualizarControlesPaginacao(currentPage, totalPages, total);
+    }
+
+    function atualizarControlesPaginacao(page, totalPages, totalItems) {
+      const pageInfo = document.getElementById('pageInfo');
+      pageInfo.textContent = `Página ${page} de ${totalPages} • ${totalItems} itens`;
+
+      document.getElementById('firstPage').disabled = page <= 1;
+      document.getElementById('prevPage').disabled  = page <= 1;
+      document.getElementById('nextPage').disabled  = page >= totalPages;
+      document.getElementById('lastPage').disabled  = page >= totalPages;
+    }
+
+    // Handlers botões
+    function irPrimeira(){ currentPage = 1; renderTabelaPaginada(); }
+    function irAnterior(){ if (currentPage > 1) { currentPage--; renderTabelaPaginada(); } }
+    function irProxima(){ const totalPages = Math.max(1, Math.ceil(itensFiltrados.length / pageSize)); if (currentPage < totalPages) { currentPage++; renderTabelaPaginada(); } }
+    function irUltima(){ currentPage = Math.max(1, Math.ceil(itensFiltrados.length / pageSize)); renderTabelaPaginada(); }
+    function mudarPageSize(){
+      const sel = document.getElementById('pageSize');
+      pageSize = parseInt(sel.value, 10) || 10;
+      currentPage = 1;
+      renderTabelaPaginada();
+    }
+
+    // ===== Carregamento =====
+    async function carregarTudo() {
+      const snap = await getDocs(col);
+      itensCache = [];
+      snap.forEach(d => itensCache.push({ id: d.id, data: d.data() }));
+
+      // Ordena por Data Compra (desc), depois por nome (asc) para estabilidade
+      itensCache.sort((a, b) => {
+        const ad = asDate(a.data.dataCompra)?.getTime() ?? 0;
+        const bd = asDate(b.data.dataCompra)?.getTime() ?? 0;
+        if (bd !== ad) return bd - ad;
+        return (a.data.nome || '').localeCompare(b.data.nome || '');
+      });
+    }
+
+    // Expor funções globais usadas no HTML
     window.adicionar = adicionar;
-    window.mostrar = mostrar;
     window.excluir = excluir;
     window.editar = editar;
     window.salvar = salvar;
     window.detalhes = detalhes;
 
-    mostrar();
+    window.aplicarFiltros = aplicarFiltros;
+    window.irPrimeira = irPrimeira;
+    window.irAnterior = irAnterior;
+    window.irProxima = irProxima;
+    window.irUltima = irUltima;
+    window.mudarPageSize = mudarPageSize;
+
+    // Boot
+    (async function init(){
+      await carregarTudo();
+      aplicarFiltros();
+    })();
   </script>
 </body>
 </html>
