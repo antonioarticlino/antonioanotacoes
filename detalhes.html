@@ -2,119 +2,134 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Descrição do Item</title>
+  <title>Compras e Vendas - Minecraft Style</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-
     html, body {
-      margin: 0;
-      padding: 0;
-      width: 100vw;
-      height: 100vh;
+      margin: 0; padding: 0; width: 100%; height: 100%;
       font-family: 'Press Start 2P', cursive;
-      background-color: #000;
-      background-size: 64px;
-      color: #fff;
-      overflow: hidden;
+      background-color: #000; background-size: 64px; color: #fff;
     }
-
     .container {
-      width: 100vw;
-      height: 100vh;
-      padding: 60px;
-      box-sizing: border-box;
-      background: rgba(0, 0, 0, 0.85);
-      border: 6px solid #3e3e3e;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
+      width: 100%; height: 100%; padding: 30px; box-sizing: border-box;
+      background: rgba(0, 0, 0, 0.85); border: 4px solid #3e3e3e;
     }
-
-    h2 {
-      text-align: center;
-      color: #8fff5f;
-      text-shadow: 2px 2px #000;
-      font-size: 28px;
-      margin-bottom: 30px;
+    h2 { color: #8fff5f; text-align: center; text-shadow: 2px 2px #000; margin-bottom: 30px; }
+    input, select, button {
+      font-family: 'Press Start 2P', monospace; padding: 10px; margin: 5px; font-size: 12px;
+      border-radius: 0; border: 3px solid #000; background: #c2b280; color: #000; box-shadow: 2px 2px #1f1f1f;
     }
-
-    #info {
-      font-size: 18px;
-      margin-bottom: 25px;
-      line-height: 2;
-      max-width: 1000px;
+    select option { background-color: #c2b280; color: #000; }
+    button { cursor: pointer; transition: 0.2s; }
+    .btn-add { background: #00aa00; color: white; }
+    .btn-edit { background: #ffaa00; color: black; }
+    .btn-save { background: #0099ff; color: white; }
+    .btn-delete { background: #cc0000; color: white; }
+    .btn-lucro {
+      background: #6a5acd; color: white; margin-top: 10px; float: right; box-shadow: 0 0 10px #6a5acd;
     }
-
-    textarea {
-      width: 90%;
-      max-width: 1000px;
-      height: 200px;
-      padding: 16px;
-      font-size: 18px;
-      border: 4px solid #000;
-      background: #c2b280;
-      color: #000;
-      resize: vertical;
-      box-shadow: inset 3px 3px #1f1f1f;
-      font-family: 'Press Start 2P', monospace;
+    .btn-add:hover,.btn-edit:hover,.btn-save:hover,.btn-delete:hover,.btn-lucro:hover {
+      transform: scale(1.05); filter: brightness(1.1);
     }
-
-    .btn {
-      margin-top: 25px;
-      padding: 16px 32px;
-      font-size: 18px;
-      font-weight: bold;
-      background: #00aa00;
-      color: white;
-      border: 4px solid #000;
-      cursor: pointer;
-      transition: 0.2s;
-      box-shadow: 3px 3px #1f1f1f;
-      font-family: 'Press Start 2P', cursive;
+    table { width: 100%; margin-top: 20px; border-collapse: collapse; background-color: #5c5c5c; }
+    thead { background: #006400; color: #fff; }
+    th, td { padding: 10px; border: 2px solid #000; text-align: center; }
+    .lucro { margin-top: 15px; font-weight: bold; color: #8fff5f; text-align: right; text-shadow: 1px 1px #000; }
+    input[type="radio"] { transform: scale(1.2); margin-right: 5px; }
+    ::placeholder { color: #333; }
+    .pagination-bar {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+      justify-content: space-between; margin-top: 16px;
+      background: #3b3b3b; border: 3px solid #000; padding: 10px;
     }
-
-    .btn:hover {
-      transform: scale(1.08);
-      filter: brightness(1.1);
+    .pagination-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .page-btn {
+      background: #2e7d32; color: #fff; border: 3px solid #000; box-shadow: 2px 2px #1f1f1f;
+      padding: 8px 10px; font-size: 12px;
     }
-
-    .voltar {
-      display: inline-block;
-      margin-top: 40px;
-      font-size: 18px;
-      color: #8fff5f;
-      text-decoration: none;
-      transition: 0.3s;
-      font-family: 'Press Start 2P', cursive;
-    }
-
-    .voltar:hover {
-      transform: scale(1.08);
-      text-shadow: 0 0 6px #000;
-    }
+    .page-btn[disabled] { opacity: 0.6; filter: grayscale(0.4); cursor: not-allowed; }
+    .page-info { color: #8fff5f; text-shadow: 1px 1px #000; font-size: 12px; }
+    .page-size { background: #c2b280; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>📝 Descrição do Item</h2>
-    <div id="info">Carregando dados...</div>
-    <textarea id="descricao" placeholder="Escreva aqui a descrição do item..."></textarea>
-    <button class="btn" onclick="salvarDescricao()">💾 Salvar Descrição</button>
-    <a href="index.html" class="voltar">⬅️ Voltar ao painel principal</a>
+    <h2>⛏ Controle de Compras e Vendas</h2>
+
+    <div>
+      <input id="nome" placeholder="Nome do item">
+      <input id="compra" type="text" placeholder="Valor compra">
+      <input id="venda" type="text" placeholder="Valor venda (opcional)">
+      <input id="dataCompra" type="date">
+      <input id="dataVenda" type="date">
+      <select id="categoria">
+        <option value="">Categoria</option>
+        <option>Fonte</option><option>SSD</option><option>HD</option><option>Memória RAM</option>
+        <option>Placa-mãe</option><option>Processador</option><option>Placa de Vídeo</option>
+        <option>Cooler</option><option>Gabinete</option><option>Teclado</option><option>Mouse</option>
+        <option>Monitor</option><option>Cabo</option><option>Head-set</option><option>Outros</option>
+      </select>
+      <button class="btn-add" onclick="adicionar()">➕ Adicionar</button>
+      <a href="lucro.html"><button class="btn-lucro">📊 Ver Lucro Mensal</button></a>
+      <a href="comparativo.html">
+        <button class="btn-lucro" style="background:#25e00c; box-shadow:0 0 10px #09e61c;">📈 Comparar KAYN x ANTONIO PEDRO</button>
+      </a>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <label><input type="radio" name="filtro" value="todos" checked onchange="aplicarFiltros()"> Todos</label>
+      <label><input type="radio" name="filtro" value="vendidos" onchange="aplicarFiltros()"> Vendidos</label>
+      <label><input type="radio" name="filtro" value="naoVendidos" onchange="aplicarFiltros()"> Não Vendidos</label>
+    </div>
+
+    <div>
+      <input type="text" id="buscaCategoria" placeholder="🔍 Buscar" oninput="aplicarFiltros()">
+    </div>
+
+    <div class="lucro" id="lucroTotal">💎 Lucro total: R$ 0,00</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th><th>Compra</th><th>Venda</th><th>Lucro</th>
+          <th>Data Compra</th><th>Data Venda</th><th>Categoria</th><th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tabela"></tbody>
+    </table>
+
+    <div class="pagination-bar">
+      <div class="pagination-controls">
+        <button class="page-btn" id="firstPage" onclick="irPrimeira()">⏮ Primeira</button>
+        <button class="page-btn" id="prevPage"  onclick="irAnterior()">◀ Anterior</button>
+        <span class="page-info" id="pageInfo">Página 1 de 1</span>
+        <button class="page-btn" id="nextPage"  onclick="irProxima()">Próxima ▶</button>
+        <button class="page-btn" id="lastPage"  onclick="irUltima()">⏭ Última</button>
+      </div>
+      <div class="pagination-controls">
+        <label for="pageSize">Itens por página:</label>
+        <select id="pageSize" class="page-size" onchange="mudarPageSize()">
+          <option value="10" selected>10</option>
+          <option value="20">20</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+    </div>
   </div>
 
+  <!-- SCRIPT sem Auth -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import {
+      getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // NOVA configuração do Firebase
+    // Config Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyAd4PhJku7IdcOkSlf_w7lMomfZdOlmxiQ",
       authDomain: "anotacoes-minhas.firebaseapp.com",
-      databaseURL: "https://anotacoes-minhas-default-rtdb.firebaseio.com",
       projectId: "anotacoes-minhas",
-      storageBucket: "anotacoes-minhas.firebasestorage.app",
+      storageBucket: "anotacoes-minhas.appspot.com",
       messagingSenderId: "725833923909",
       appId: "1:725833923909:web:7fc54b2b340d962be1522c",
       measurementId: "G-2LQC2KWE4S"
@@ -122,50 +137,244 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const col = collection(db, "itens");
 
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
+    // ===== Helpers =====
+    function dateAtNoon(y, m, d) { return new Date(y, m - 1, d, 12, 0, 0, 0); }
+    function toDateFromInput(value) { if (!value) return null; const [y, m, d] = value.split('-').map(Number); return dateAtNoon(y, m, d); }
+    function parseBRDate(str) {
+      if (!str) return null;
+      const m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (!m) return null;
+      const d = +m[1], mo = +m[2], y = +m[3];
+      return dateAtNoon(y, mo, d);
+    }
+    function asDate(stored) {
+      if (!stored) return null;
+      if (typeof stored?.toDate === 'function') return stored.toDate();
+      if (typeof stored?.seconds === 'number') return new Date(stored.seconds * 1000);
+      if (stored instanceof Date) return stored;
+      if (typeof stored === 'number') return new Date(stored);
+      if (typeof stored === 'string') return new Date(stored);
+      return null;
+    }
+    function formatBRDate(stored) {
+      const d = asDate(stored);
+      return d && !isNaN(d.getTime()) ? d.toLocaleDateString('pt-BR') : '';
+    }
+    function parseMoney(str) {
+      if (str == null) return NaN;
+      let s = String(str).replace(/R\$\s?/i, '').trim();
+      s = s.replace(/\./g, '').replace(',', '.');
+      const n = parseFloat(s);
+      return Number.isFinite(n) ? n : NaN;
+    }
+    const brl = (n) => Number.isFinite(n) ? n.toLocaleString('pt-BR', { style:'currency', currency:'BRL' }) : '';
 
-    const ref = doc(db, "itens", id);
+    // ===== Estado/Paginação =====
+    let itensCache = [];
+    let itensFiltrados = [];
+    let currentPage = 1;
+    let pageSize = 10;
 
-    async function carregarDescricao() {
-      const docSnap = await getDoc(ref);
-      if (docSnap.exists()) {
-        const dados = docSnap.data();
+    function todayInputValue() {
+      const t = new Date();
+      const y = t.getFullYear(), m = String(t.getMonth()+1).padStart(2,'0'), d = String(t.getDate()).padStart(2,'0');
+      return `${y}-${m}-${d}`;
+    }
+    const dcEl = document.getElementById('dataCompra');
+    if (dcEl && !dcEl.value) dcEl.value = todayInputValue();
 
-        // Tratamento para dataCompra e dataVenda
-        const dataCompra = dados.dataCompra
-          ? (dados.dataCompra.seconds
-            ? new Date(dados.dataCompra.seconds * 1000).toLocaleDateString()
-            : dados.dataCompra)
-          : "-";
-        const dataVenda = dados.dataVenda
-          ? (dados.dataVenda.seconds
-            ? new Date(dados.dataVenda.seconds * 1000).toLocaleDateString()
-            : dados.dataVenda)
-          : "Ainda não vendido";
+    // ===== CRUD =====
+    async function adicionar() {
+      const nome = document.getElementById('nome').value.trim();
+      const compra = parseMoney(document.getElementById('compra').value);
+      const vendaInput = document.getElementById('venda').value;
+      const venda = vendaInput !== '' ? parseMoney(vendaInput) : null;
 
-        document.getElementById("info").innerHTML = `
-          <strong>🧾 Nome:</strong> ${dados.nome}<br>
-          <strong>📦 Categoria:</strong> ${dados.categoria}<br>
-          <strong>📅 Data Compra:</strong> ${dataCompra}<br>
-          <strong>💰 Compra:</strong> R$ ${dados.compra}<br>
-          <strong>💵 Venda:</strong> ${dados.venda ? "R$ " + dados.venda : "Ainda não vendido"}
+      const dataCompra = toDateFromInput(document.getElementById('dataCompra').value);
+      const dataVenda  = toDateFromInput(document.getElementById('dataVenda').value);
+      const categoria  = document.getElementById('categoria').value.trim();
+
+      if (!nome || !categoria) { alert("Preencha os campos obrigatórios (nome e categoria)."); return; }
+      if (!Number.isFinite(compra) || compra < 0) { alert("Valor de compra inválido (aceita 0 ou positivo)."); return; }
+      if (venda !== null && (!Number.isFinite(venda) || venda < 0)) { alert("Valor de venda inválido."); return; }
+
+      await addDoc(col, { nome, compra, venda, dataCompra, dataVenda, categoria });
+      limpar();
+      await carregarTudo();
+      aplicarFiltros();
+    }
+
+    async function excluir(id) {
+      await deleteDoc(doc(db, "itens", id));
+      await carregarTudo();
+      aplicarFiltros();
+    }
+
+    function editar(id) {
+      const linha = document.getElementById(`linha-${id}`);
+      const cels = linha.querySelectorAll("td");
+      for (let i = 0; i < 7; i++) cels[i].setAttribute("contenteditable", "true");
+      linha.querySelector(".btn-edit").style.display = "none";
+      linha.querySelector(".btn-save").style.display = "inline-block";
+    }
+
+    async function salvar(id) {
+      const linha = document.getElementById(`linha-${id}`);
+      const cels = linha.querySelectorAll("td");
+
+      const nome = cels[0].innerText.trim();
+      const compra = parseMoney(cels[1].innerText);
+      const venda  = cels[2].innerText.trim() !== '' ? parseMoney(cels[2].innerText) : null;
+
+      const dataCompraStr = cels[4].innerText.trim();
+      const dataVendaStr  = cels[5].innerText.trim();
+      const dataCompra = parseBRDate(dataCompraStr) ?? toDateFromInput(dataCompraStr) ?? null;
+      const dataVenda  = parseBRDate(dataVendaStr)  ?? toDateFromInput(dataVendaStr)  ?? null;
+
+      const categoria = cels[6].innerText.trim();
+
+      if (!nome || !categoria) { alert("Preencha os campos obrigatórios (nome e categoria)."); return; }
+      if (!Number.isFinite(compra) || compra < 0) { alert("Valor de compra inválido (aceita 0 ou positivo)."); return; }
+      if (venda !== null && (!Number.isFinite(venda) || venda < 0)) { alert("Valor de venda inválido."); return; }
+
+      await updateDoc(doc(db, "itens", id), { nome, compra, venda, dataCompra, dataVenda, categoria });
+
+      for (let i = 0; i < 7; i++) cels[i].setAttribute("contenteditable", "false");
+      linha.querySelector(".btn-edit").style.display = "inline-block";
+      linha.querySelector(".btn-save").style.display = "none";
+
+      await carregarTudo();
+      aplicarFiltros();
+    }
+
+    function limpar() {
+      document.getElementById('nome').value = "";
+      document.getElementById('compra').value = "";
+      document.getElementById('venda').value = "";
+      document.getElementById('dataCompra').value = todayInputValue();
+      document.getElementById('dataVenda').value = "";
+      document.getElementById('categoria').value = "";
+    }
+
+    function detalhes(id) { window.location.href = `detalhes.html?id=${id}`; }
+
+    // ===== Filtros/Paginação + Render =====
+    function aplicarFiltros() {
+      const filtro = document.querySelector('input[name="filtro"]:checked').value;
+      const termoBusca = document.getElementById('buscaCategoria')?.value.toLowerCase() || "";
+
+      itensFiltrados = itensCache.filter(({ data }) => {
+        const vendido = data.venda !== null && data.venda !== undefined;
+        if ((filtro === 'vendidos' && !vendido) || (filtro === 'naoVendidos' && vendido)) return false;
+        if (termoBusca && !data.categoria?.toLowerCase().includes(termoBusca)) return false;
+        return true;
+      });
+
+      currentPage = 1;
+      renderTabelaPaginada();
+    }
+
+    function renderTabelaPaginada() {
+      const tabela = document.getElementById('tabela');
+      tabela.innerHTML = "";
+
+      const total = itensFiltrados.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+      const pageItems = itensFiltrados.slice(start, end);
+
+      let lucroTotal = 0;
+
+      for (const { id, data } of pageItems) {
+        const vendido = data.venda !== null && data.venda !== undefined;
+        const lucro = vendido ? (data.venda - data.compra) : null;
+        if (vendido) lucroTotal += (data.venda - data.compra);
+
+        const dataCompraStr = formatBRDate(data.dataCompra);
+        const dataVendaStr  = formatBRDate(data.dataVenda);
+
+        tabela.innerHTML += `
+          <tr id="linha-${id}">
+            <td contenteditable="false">${data.nome ?? ""}</td>
+            <td contenteditable="false">${brl(data.compra)}</td>
+            <td contenteditable="false">${data.venda != null ? brl(data.venda) : ""}</td>
+            <td>${vendido ? brl(lucro) : "-"}</td>
+            <td contenteditable="false">${dataCompraStr}</td>
+            <td contenteditable="false">${dataVendaStr}</td>
+            <td contenteditable="false">${data.categoria ?? ""}</td>
+            <td>
+              <button class="btn-edit" onclick="editar('${id}')">✏️</button>
+              <button class="btn-save" onclick="salvar('${id}')" style="display:none;">📂</button>
+              <button class="btn-delete" onclick="excluir('${id}')">🗑️</button>
+              <button onclick="detalhes('${id}')">🔍</button>
+            </td>
+          </tr>
         `;
-        document.getElementById("descricao").value = dados.descricao || "";
-      } else {
-        alert("Item não encontrado.");
       }
+
+      document.getElementById("lucroTotal").innerText = `💎 Lucro total (página): ${brl(lucroTotal)}`;
+      atualizarControlesPaginacao(currentPage, totalPages, total);
     }
 
-    async function salvarDescricao() {
-      const texto = document.getElementById("descricao").value.trim();
-      await updateDoc(ref, { descricao: texto });
-      alert("Descrição salva com sucesso!");
+    function atualizarControlesPaginacao(page, totalPages, totalItems) {
+      const pageInfo = document.getElementById('pageInfo');
+      pageInfo.textContent = `Página ${page} de ${totalPages} • ${totalItems} itens`;
+
+      document.getElementById('firstPage').disabled = page <= 1;
+      document.getElementById('prevPage').disabled  = page <= 1;
+      document.getElementById('nextPage').disabled  = page >= totalPages;
+      document.getElementById('lastPage').disabled  = page >= totalPages;
     }
 
-    carregarDescricao();
-    window.salvarDescricao = salvarDescricao;
+    function irPrimeira(){ currentPage = 1; renderTabelaPaginada(); }
+    function irAnterior(){ if (currentPage > 1) { currentPage--; renderTabelaPaginada(); } }
+    function irProxima(){ const totalPages = Math.max(1, Math.ceil(itensFiltrados.length / pageSize)); if (currentPage < totalPages) { currentPage++; renderTabelaPaginada(); } }
+    function irUltima(){ currentPage = Math.max(1, Math.ceil(itensFiltrados.length / pageSize)); renderTabelaPaginada(); }
+    function mudarPageSize(){
+      const sel = document.getElementById('pageSize');
+      pageSize = parseInt(sel.value, 10) || 10;
+      currentPage = 1;
+      renderTabelaPaginada();
+    }
+
+    // ===== Carregamento =====
+    async function carregarTudo() {
+      const snap = await getDocs(col);
+      itensCache = [];
+      snap.forEach(d => itensCache.push({ id: d.id, data: d.data() }));
+
+      itensCache.sort((a, b) => {
+        const ad = asDate(a.data.dataCompra)?.getTime() ?? 0;
+        const bd = asDate(b.data.dataCompra)?.getTime() ?? 0;
+        if (bd !== ad) return bd - ad;
+        return (a.data.nome || '').localeCompare(b.data.nome || '');
+      });
+    }
+
+    // Expor funções globais
+    window.adicionar = adicionar;
+    window.excluir = excluir;
+    window.editar = editar;
+    window.salvar = salvar;
+    window.detalhes = detalhes;
+
+    window.aplicarFiltros = aplicarFiltros;
+    window.irPrimeira = irPrimeira;
+    window.irAnterior = irAnterior;
+    window.irProxima = irProxima;
+    window.irUltima = irUltima;
+    window.mudarPageSize = mudarPageSize;
+
+    // Boot
+    (async function init(){
+      await carregarTudo();
+      aplicarFiltros();
+    })();
   </script>
 </body>
 </html>
