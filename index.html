@@ -37,8 +37,6 @@
     .lucro { margin-top: 15px; font-weight: bold; color: #8fff5f; text-align: right; text-shadow: 1px 1px #000; }
     input[type="radio"] { transform: scale(1.2); margin-right: 5px; }
     ::placeholder { color: #333; }
-
-    /* Paginação estilo Minecraft */
     .pagination-bar {
       display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
       justify-content: space-between; margin-top: 16px;
@@ -60,7 +58,6 @@
 
     <div>
       <input id="nome" placeholder="Nome do item">
-      <!-- valores como TEXT p/ aceitar vírgula/ponto -->
       <input id="compra" type="text" placeholder="Valor compra">
       <input id="venda" type="text" placeholder="Valor venda (opcional)">
       <input id="dataCompra" type="date">
@@ -101,7 +98,6 @@
       <tbody id="tabela"></tbody>
     </table>
 
-    <!-- Barra de Paginação -->
     <div class="pagination-bar">
       <div class="pagination-controls">
         <button class="page-btn" id="firstPage" onclick="irPrimeira()">⏮ Primeira</button>
@@ -121,10 +117,12 @@
     </div>
   </div>
 
+  <!-- SCRIPT sem Auth -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+    import {
+      getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     // Config Firebase
     const firebaseConfig = {
@@ -138,12 +136,11 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
     const db = getFirestore(app);
     const col = collection(db, "itens");
 
     // ===== Helpers =====
-    function dateAtNoon(y, m, d) { return new Date(y, m - 1, d, 12, 0, 0, 0); } // evita shift de fuso
+    function dateAtNoon(y, m, d) { return new Date(y, m - 1, d, 12, 0, 0, 0); }
     function toDateFromInput(value) { if (!value) return null; const [y, m, d] = value.split('-').map(Number); return dateAtNoon(y, m, d); }
     function parseBRDate(str) {
       if (!str) return null;
@@ -174,9 +171,9 @@
     }
     const brl = (n) => Number.isFinite(n) ? n.toLocaleString('pt-BR', { style:'currency', currency:'BRL' }) : '';
 
-    // ===== Estado de Paginação =====
-    let itensCache = [];       // todos itens carregados do Firestore
-    let itensFiltrados = [];   // após aplicar filtros/busca
+    // ===== Estado/Paginação =====
+    let itensCache = [];
+    let itensFiltrados = [];
     let currentPage = 1;
     let pageSize = 10;
 
@@ -205,8 +202,8 @@
 
       await addDoc(col, { nome, compra, venda, dataCompra, dataVenda, categoria });
       limpar();
-      await carregarTudo(); // recarrega cache
-      aplicarFiltros();     // re-render com paginação
+      await carregarTudo();
+      aplicarFiltros();
     }
 
     async function excluir(id) {
@@ -263,7 +260,7 @@
 
     function detalhes(id) { window.location.href = `detalhes.html?id=${id}`; }
 
-    // ===== Paginação + Render =====
+    // ===== Filtros/Paginação + Render =====
     function aplicarFiltros() {
       const filtro = document.querySelector('input[name="filtro"]:checked').value;
       const termoBusca = document.getElementById('buscaCategoria')?.value.toLowerCase() || "";
@@ -275,7 +272,6 @@
         return true;
       });
 
-      // Sempre volta pra primeira página quando muda filtro/busca
       currentPage = 1;
       renderTabelaPaginada();
     }
@@ -335,7 +331,6 @@
       document.getElementById('lastPage').disabled  = page >= totalPages;
     }
 
-    // Handlers botões
     function irPrimeira(){ currentPage = 1; renderTabelaPaginada(); }
     function irAnterior(){ if (currentPage > 1) { currentPage--; renderTabelaPaginada(); } }
     function irProxima(){ const totalPages = Math.max(1, Math.ceil(itensFiltrados.length / pageSize)); if (currentPage < totalPages) { currentPage++; renderTabelaPaginada(); } }
@@ -353,7 +348,6 @@
       itensCache = [];
       snap.forEach(d => itensCache.push({ id: d.id, data: d.data() }));
 
-      // Ordena por Data Compra (desc), depois por nome (asc) para estabilidade
       itensCache.sort((a, b) => {
         const ad = asDate(a.data.dataCompra)?.getTime() ?? 0;
         const bd = asDate(b.data.dataCompra)?.getTime() ?? 0;
@@ -362,7 +356,7 @@
       });
     }
 
-    // Expor funções globais usadas no HTML
+    // Expor funções globais
     window.adicionar = adicionar;
     window.excluir = excluir;
     window.editar = editar;
